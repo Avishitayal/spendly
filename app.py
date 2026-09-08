@@ -1,16 +1,31 @@
+import os
 import re
 import sqlite3
 
-from flask import Flask, redirect, render_template, request, url_for
-from werkzeug.security import generate_password_hash
+from flask import (
+    Flask,
+    flash,
+    g,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from database.db import get_db, init_db, seed_db
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
 # Basic "x@y.z" shape check — server-side validation is deliberately lightweight;
 # the real guard against duplicates is the UNIQUE constraint on users.email.
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+# One message for every failure mode so the form never reveals which emails
+# are registered.
+LOGIN_ERROR = "Incorrect email or password."
 
 
 def _validate_registration(name, email, password):
@@ -28,6 +43,28 @@ with app.app_context():
     seed_db()
 
 
+@app.before_request
+def load_logged_in_user():
+    """Attach the signed-in user row (or None) to ``g`` for every request."""
+    user_id = session.get("user_id")
+    if user_id is None:
+        g.user = None
+        return
+    conn = get_db()
+    try:
+        g.user = conn.execute(
+            "SELECT id, name, email FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+@app.context_processor
+def inject_current_user():
+    """Expose the current user to every template as ``current_user``."""
+    return {"current_user": g.get("user")}
+
+
 # ------------------------------------------------------------------ #
 # Routes                                                              #
 # ------------------------------------------------------------------ #
@@ -39,6 +76,9 @@ def landing():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if session.get("user_id"):
+        return redirect(url_for("landing"))
+
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip().lower()
@@ -68,9 +108,40 @@ def register():
     return render_template("register.html", form={})
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    if session.get("user_id"):
+        return redirect(url_for("landing"))
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        user = None
+        if email and password:
+            conn = get_db()
+            try:
+                user = conn.execute(
+                    "SELECT * FROM users WHERE email = ?", (email,)
+                ).fetchone()
+            finally:
+                conn.close()
+
+        if user is not None and check_password_hash(user["password_hash"], password):
+            session.clear()
+            session["user_id"] = user["id"]
+            return redirect(url_for("landing"))
+
+        return render_template("login.html", error=LOGIN_ERROR, form={"email": email})
+
+    return render_template("login.html", form={})
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("You have been signed out.", "success")
+    return redirect(url_for("landing"))
 
 
 @app.route("/terms")
@@ -86,11 +157,6 @@ def privacy():
 # ------------------------------------------------------------------ #
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #
-
-@app.route("/logout")
-def logout():
-    return "Logout — coming in Step 3"
-
 
 @app.route("/profile")
 def profile():
