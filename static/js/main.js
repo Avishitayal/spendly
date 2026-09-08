@@ -1,1 +1,6 @@
-// main.js — students will add JavaScript here as features are built
+// main.js — global scripts
+
+// Replace every <i data-lucide="..."> on the page with its SVG icon.
+if (window.lucide) {
+    lucide.createIcons();
+}
