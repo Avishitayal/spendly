@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">{% endblock %}
+
+{% block content %}
+
+<section class="profile">
+    <div class="profile-inner">
+
+        <h1 class="profile-heading">Profile</h1>
+
+        <div class="profile-identity">
+            <div class="profile-avatar">{{ current_user.name[:1] | upper }}</div>
+            <div class="profile-identity-text">
+                <h2 class="profile-name">{{ current_user.name }}</h2>
+                <p class="profile-email">{{ current_user.email }}</p>
+                {% if member_since %}
+                <p class="profile-meta">
+                    <i data-lucide="calendar"></i> Member since {{ member_since }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="profile-stats">
+            <div class="profile-stat-card">
+                <span class="profile-stat-icon"><i data-lucide="wallet"></i></span>
+                <span class="profile-stat-label">Total spent</span>
+                <span class="profile-stat-value">{{ total_spent | rupees }}</span>
+            </div>
+            <div class="profile-stat-card">
+                <span class="profile-stat-icon"><i data-lucide="receipt"></i></span>
+                <span class="profile-stat-label">Expenses logged</span>
+                <span class="profile-stat-value">{{ expense_count }}</span>
+            </div>
+            <div class="profile-stat-card">
+                <span class="profile-stat-icon"><i data-lucide="tag"></i></span>
+                <span class="profile-stat-label">Top category</span>
+                <span class="profile-stat-value">{{ top_category or "No expenses yet" }}</span>
+            </div>
+        </div>
+
+        <div class="profile-breakdown">
+            <h3 class="profile-breakdown-title">Spending by category</h3>
+            {% if breakdown %}
+            <ul class="profile-cat-list">
+                {% for row in breakdown %}
+                <li class="profile-cat-row">
+                    <span class="profile-cat-label">{{ row.category }}</span>
+                    <span class="profile-cat-track">
+                        <span class="profile-cat-bar" style="width: {{ row.pct }}%"></span>
+                    </span>
+                    <span class="profile-cat-amount">{{ row.total | rupees }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="profile-empty">
+                No expenses yet — once you start logging, your category breakdown
+                shows up here.
+            </p>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

@@ -1,6 +1,8 @@
 import os
 import re
 import sqlite3
+from datetime import datetime
+from functools import wraps
 
 from flask import (
     Flask,
@@ -53,7 +55,7 @@ def load_logged_in_user():
     conn = get_db()
     try:
         g.user = conn.execute(
-            "SELECT id, name, email FROM users WHERE id = ?", (user_id,)
+            "SELECT id, name, email, created_at FROM users WHERE id = ?", (user_id,)
         ).fetchone()
     finally:
         conn.close()
@@ -63,6 +65,43 @@ def load_logged_in_user():
 def inject_current_user():
     """Expose the current user to every template as ``current_user``."""
     return {"current_user": g.get("user")}
+
+
+def login_required(view):
+    """Redirect to the login page when no user is signed in.
+
+    Keys only off ``g.user`` so every logged-in-only route from here on can wear
+    this decorator unchanged.
+    """
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if g.user is None:
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+def _month_year(timestamp):
+    """``'2026-09-08 12:34:56'`` -> ``'September 2026'``; ``None`` if unparseable."""
+    if not timestamp:
+        return None
+    try:
+        return datetime.strptime(str(timestamp)[:19], "%Y-%m-%d %H:%M:%S").strftime(
+            "%B %Y"
+        )
+    except ValueError:
+        return None
+
+
+@app.template_filter("rupees")
+def rupees(value):
+    """Format a number as Indian rupees: ``1234.5`` -> ``'₹1,234.50'``."""
+    try:
+        amount = float(value)
+    except (TypeError, ValueError):
+        amount = 0.0
+    return f"₹{amount:,.2f}"
 
 
 # ------------------------------------------------------------------ #
@@ -130,7 +169,7 @@ def login():
         if user is not None and check_password_hash(user["password_hash"], password):
             session.clear()
             session["user_id"] = user["id"]
-            return redirect(url_for("landing"))
+            return redirect(url_for("profile"))
 
         return render_template("login.html", error=LOGIN_ERROR, form={"email": email})
 
@@ -159,8 +198,42 @@ def privacy():
 # ------------------------------------------------------------------ #
 
 @app.route("/profile")
+@login_required
 def profile():
-    return "Profile page — coming in Step 4"
+    conn = get_db()
+    try:
+        summary = conn.execute(
+            "SELECT COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total "
+            "FROM expenses WHERE user_id = ?",
+            (g.user["id"],),
+        ).fetchone()
+        rows = conn.execute(
+            "SELECT category, SUM(amount) AS total "
+            "FROM expenses WHERE user_id = ? "
+            "GROUP BY category ORDER BY total DESC",
+            (g.user["id"],),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    top_total = rows[0]["total"] if rows else 0
+    breakdown = [
+        {
+            "category": row["category"],
+            "total": row["total"],
+            "pct": round(row["total"] / top_total * 100) if top_total else 0,
+        }
+        for row in rows
+    ]
+
+    return render_template(
+        "profile.html",
+        expense_count=summary["count"],
+        total_spent=summary["total"],
+        top_category=rows[0]["category"] if rows else None,
+        breakdown=breakdown,
+        member_since=_month_year(g.user["created_at"]),
+    )
 
 
 @app.route("/expenses/add")

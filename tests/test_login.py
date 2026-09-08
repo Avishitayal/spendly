@@ -47,7 +47,7 @@ def test_login_success(client):
         follow_redirects=False,
     )
     assert resp.status_code == 302
-    assert resp.headers["Location"].endswith("/")
+    assert resp.headers["Location"].endswith("/profile")
 
     home = client.get("/")
     assert b"Logout" in home.data
@@ -61,7 +61,7 @@ def test_login_normalises_email(client):
         data={"email": "  Mixed@Example.COM  ", "password": "password123"},
     )
     assert resp.status_code == 302
-    assert resp.headers["Location"].endswith("/")
+    assert resp.headers["Location"].endswith("/profile")
 
 
 def test_login_wrong_password(client):
@@ -174,4 +174,4 @@ def test_seeded_demo_user_can_log_in(client):
         data={"email": "demo@spendly.com", "password": "demo123"},
     )
     assert resp.status_code == 302
-    assert resp.headers["Location"].endswith("/")
+    assert resp.headers["Location"].endswith("/profile")
