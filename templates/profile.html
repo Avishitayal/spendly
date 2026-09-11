@@ -24,6 +24,28 @@
             </div>
         </div>
 
+        <div class="profile-filter">
+            <nav class="profile-filter-quick">
+                <a href="{{ url_for('profile') }}"
+                   class="profile-filter-link{{ ' active' if active_filter == 'all_time' else '' }}">All Time</a>
+                <a href="{{ url_for('profile', start=this_month_start, end=this_month_end) }}"
+                   class="profile-filter-link{{ ' active' if active_filter == 'this_month' else '' }}">This Month</a>
+                <a href="{{ url_for('profile', start=last_month_start, end=last_month_end) }}"
+                   class="profile-filter-link{{ ' active' if active_filter == 'last_month' else '' }}">Last Month</a>
+            </nav>
+            <form class="profile-filter-form" method="get" action="{{ url_for('profile') }}">
+                <div class="profile-filter-field">
+                    <label for="filter-start">From</label>
+                    <input type="date" id="filter-start" name="start" class="form-input" value="{{ selected_start }}">
+                </div>
+                <div class="profile-filter-field">
+                    <label for="filter-end">To</label>
+                    <input type="date" id="filter-end" name="end" class="form-input" value="{{ selected_end }}">
+                </div>
+                <button type="submit" class="btn-primary profile-filter-submit">Apply</button>
+            </form>
+        </div>
+
         <div class="profile-stats">
             <div class="profile-stat-card">
                 <span class="profile-stat-icon"><i data-lucide="wallet"></i></span>
@@ -38,7 +60,7 @@
             <div class="profile-stat-card">
                 <span class="profile-stat-icon"><i data-lucide="tag"></i></span>
                 <span class="profile-stat-label">Top category</span>
-                <span class="profile-stat-value">{{ top_category or "No expenses yet" }}</span>
+                <span class="profile-stat-value">{{ top_category_display }}</span>
             </div>
         </div>
 
@@ -56,6 +78,11 @@
                 </li>
                 {% endfor %}
             </ul>
+            {% elif is_filtered %}
+            <p class="profile-empty">
+                No expenses in this range — try a different range or clear the
+                filter.
+            </p>
             {% else %}
             <p class="profile-empty">
                 No expenses yet — once you start logging, your category breakdown
