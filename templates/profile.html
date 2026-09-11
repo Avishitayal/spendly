@@ -9,7 +9,10 @@
 <section class="profile">
     <div class="profile-inner">
 
-        <h1 class="profile-heading">Profile</h1>
+        <div class="profile-heading-row">
+            <h1 class="profile-heading">Profile</h1>
+            <a href="{{ url_for('add_expense') }}" class="btn-primary">+ Add expense</a>
+        </div>
 
         <div class="profile-identity">
             <div class="profile-avatar">{{ current_user.name[:1] | upper }}</div>
