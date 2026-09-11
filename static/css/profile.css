@@ -68,6 +68,74 @@
     height: 15px;
 }
 
+/* Date filter -------------------------------------------------------- */
+
+.profile-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.profile-filter-quick {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.profile-filter-link {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.profile-filter-link:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+}
+
+.profile-filter-link.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.profile-filter-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.profile-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.profile-filter-field label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+}
+
+.profile-filter-field .form-input {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.85rem;
+}
+
+.profile-filter-submit {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.85rem;
+}
+
 /* Stat cards ------------------------------------------------------- */
 
 .profile-stats {
@@ -172,6 +240,19 @@
 /* Responsive ----------------------------------------------------- */
 
 @media (max-width: 600px) {
+    .profile-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .profile-filter-quick {
+        flex-wrap: wrap;
+    }
+
+    .profile-filter-form {
+        flex-wrap: wrap;
+    }
+
     .profile-stats {
         grid-template-columns: 1fr;
     }
