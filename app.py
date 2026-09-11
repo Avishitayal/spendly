@@ -1,4 +1,5 @@
 import calendar
+import math
 import os
 import re
 import sqlite3
@@ -30,6 +31,16 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # are registered.
 LOGIN_ERROR = "Incorrect email or password."
 
+EXPENSE_CATEGORIES = [
+    "Food",
+    "Bills",
+    "Transport",
+    "Entertainment",
+    "Health",
+    "Shopping",
+    "Other",
+]
+
 
 def _validate_registration(name, email, password):
     """Return an error string for invalid input, or None when it is acceptable."""
@@ -40,6 +51,32 @@ def _validate_registration(name, email, password):
     if len(password) < 8:
         return "Password must be at least 8 characters."
     return None
+
+
+def _validate_expense(amount_raw, category, date_raw):
+    """Validate a submitted expense.
+
+    Returns ``(error, amount)`` — ``error`` is ``None`` and ``amount`` is the
+    parsed float when the input is acceptable; otherwise ``error`` is a
+    user-facing message and ``amount`` is ``None``.
+    """
+    try:
+        amount = float(amount_raw)
+    except (TypeError, ValueError):
+        return "Please enter a valid amount.", None
+    if not math.isfinite(amount) or amount <= 0:
+        return "Amount must be greater than zero.", None
+
+    if category not in EXPENSE_CATEGORIES:
+        return "Please choose a valid category.", None
+
+    try:
+        datetime.strptime(date_raw, "%Y-%m-%d")
+    except (TypeError, ValueError):
+        return "Please enter a valid date.", None
+
+    return None, amount
+
 
 with app.app_context():
     init_db()
@@ -309,9 +346,48 @@ def profile():
     )
 
 
-@app.route("/expenses/add")
+@app.route("/expenses/add", methods=["GET", "POST"])
+@login_required
 def add_expense():
-    return "Add expense — coming in Step 7"
+    if request.method == "POST":
+        amount_raw = request.form.get("amount", "")
+        category = request.form.get("category", "")
+        date_raw = request.form.get("date", "")
+        description = request.form.get("description", "").strip()[:200]
+
+        error, amount = _validate_expense(amount_raw, category, date_raw)
+        if error is None:
+            conn = get_db()
+            try:
+                with conn:
+                    conn.execute(
+                        "INSERT INTO expenses (user_id, amount, category, date, description) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        (g.user["id"], amount, category, date_raw, description or None),
+                    )
+            finally:
+                conn.close()
+            flash("Expense added.", "success")
+            return redirect(url_for("profile"))
+
+        return render_template(
+            "add_expense.html",
+            error=error,
+            categories=EXPENSE_CATEGORIES,
+            form={
+                "amount": amount_raw,
+                "category": category,
+                "date": date_raw,
+                "description": description,
+            },
+        )
+
+    return render_template(
+        "add_expense.html",
+        error=None,
+        categories=EXPENSE_CATEGORIES,
+        form={"date": date.today().strftime("%Y-%m-%d")},
+    )
 
 
 @app.route("/expenses/<int:id>/edit")

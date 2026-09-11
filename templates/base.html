@@ -21,6 +21,7 @@
             <div class="nav-links">
                 {% if current_user %}
                 <a href="{{ url_for('profile') }}" class="nav-user">{{ current_user.name }}</a>
+                <a href="{{ url_for('add_expense') }}" class="nav-cta">Add expense</a>
                 <a href="{{ url_for('logout') }}">Logout</a>
                 {% else %}
                 <a href="{{ url_for('login') }}">Sign in</a>

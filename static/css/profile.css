@@ -8,12 +8,19 @@
     padding: 4rem 2rem 5rem;
 }
 
+.profile-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
 .profile-heading {
     font-family: var(--font-display);
     font-size: 2.4rem;
     color: var(--ink);
     line-height: 1.15;
-    margin-bottom: 2rem;
 }
 
 /* Identity ---------------------------------------------------------- */
@@ -240,6 +247,16 @@
 /* Responsive ----------------------------------------------------- */
 
 @media (max-width: 600px) {
+    .profile-heading-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .profile-heading-row .btn-primary {
+        text-align: center;
+    }
+
     .profile-filter {
         flex-direction: column;
         align-items: stretch;
