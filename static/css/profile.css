@@ -298,6 +298,13 @@
     font-variant-numeric: tabular-nums;
 }
 
+.profile-expense-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-self: end;
+}
+
 .profile-expense-edit {
     display: flex;
     align-items: center;
@@ -306,7 +313,6 @@
     font-weight: 500;
     color: var(--accent);
     text-decoration: none;
-    justify-self: end;
 }
 
 .profile-expense-edit:hover {
@@ -314,6 +320,29 @@
 }
 
 .profile-expense-edit svg {
+    width: 14px;
+    height: 14px;
+}
+
+.profile-expense-delete {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--danger);
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.profile-expense-delete:hover {
+    text-decoration: underline;
+}
+
+.profile-expense-delete svg {
     width: 14px;
     height: 14px;
 }
@@ -372,5 +401,13 @@
     .profile-expense-category { grid-area: category; }
     .profile-expense-description { grid-area: description; white-space: normal; }
     .profile-expense-amount { grid-area: amount; text-align: left; }
-    .profile-expense-edit { grid-area: edit; align-self: center; }
+
+    .profile-expense-actions {
+        grid-area: edit;
+        align-self: center;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.35rem;
+    }
 }
