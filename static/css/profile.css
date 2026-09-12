@@ -244,6 +244,80 @@
     line-height: 1.7;
 }
 
+/* Expense list ----------------------------------------------------- */
+
+.profile-expenses {
+    margin-top: 2.5rem;
+}
+
+.profile-expense-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.profile-expense-row {
+    display: grid;
+    grid-template-columns: 96px 100px 1fr 92px auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.profile-expense-row:last-child {
+    border-bottom: none;
+}
+
+.profile-expense-date {
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.profile-expense-category {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+}
+
+.profile-expense-description {
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-expense-amount {
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.profile-expense-edit {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    justify-self: end;
+}
+
+.profile-expense-edit:hover {
+    text-decoration: underline;
+}
+
+.profile-expense-edit svg {
+    width: 14px;
+    height: 14px;
+}
+
 /* Responsive ----------------------------------------------------- */
 
 @media (max-width: 600px) {
@@ -282,4 +356,21 @@
         grid-column: 2;
         text-align: left;
     }
+
+    .profile-expense-row {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "date edit"
+            "category edit"
+            "description edit"
+            "amount edit";
+        row-gap: 0.25rem;
+        align-items: start;
+    }
+
+    .profile-expense-date { grid-area: date; }
+    .profile-expense-category { grid-area: category; }
+    .profile-expense-description { grid-area: description; white-space: normal; }
+    .profile-expense-amount { grid-area: amount; text-align: left; }
+    .profile-expense-edit { grid-area: edit; align-self: center; }
 }
