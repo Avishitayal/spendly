@@ -94,6 +94,34 @@
             {% endif %}
         </div>
 
+        <div class="profile-expenses">
+            <h3 class="profile-breakdown-title">Expenses</h3>
+            {% if expenses %}
+            <ul class="profile-expense-list">
+                {% for row in expenses %}
+                <li class="profile-expense-row">
+                    <span class="profile-expense-date">{{ row.date }}</span>
+                    <span class="profile-expense-category">{{ row.category }}</span>
+                    <span class="profile-expense-description">{{ row.description or "—" }}</span>
+                    <span class="profile-expense-amount">{{ row.amount | rupees }}</span>
+                    <a href="{{ url_for('edit_expense', id=row.id) }}" class="profile-expense-edit">
+                        <i data-lucide="pencil"></i> Edit
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% elif is_filtered %}
+            <p class="profile-empty">
+                No expenses in this range — try a different range or clear the
+                filter.
+            </p>
+            {% else %}
+            <p class="profile-empty">
+                No expenses yet — once you start logging, they'll show up here.
+            </p>
+            {% endif %}
+        </div>
+
     </div>
 </section>
 

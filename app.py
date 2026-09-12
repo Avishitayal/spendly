@@ -8,6 +8,7 @@ from functools import wraps
 
 from flask import (
     Flask,
+    abort,
     flash,
     g,
     redirect,
@@ -304,6 +305,12 @@ def profile():
             "GROUP BY category ORDER BY total DESC",
             params,
         ).fetchall()
+        expenses = conn.execute(
+            "SELECT id, amount, category, date, description "
+            "FROM expenses WHERE user_id = ?" + date_clause + " "
+            "ORDER BY date DESC, id DESC",
+            params,
+        ).fetchall()
     finally:
         conn.close()
 
@@ -343,6 +350,7 @@ def profile():
         this_month_end=this_month_end,
         last_month_start=last_month_start,
         last_month_end=last_month_end,
+        expenses=expenses,
     )
 
 
@@ -390,9 +398,62 @@ def add_expense():
     )
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    conn = get_db()
+    try:
+        expense = conn.execute(
+            "SELECT * FROM expenses WHERE id = ? AND user_id = ?",
+            (id, g.user["id"]),
+        ).fetchone()
+        if expense is None:
+            abort(404)
+
+        if request.method == "POST":
+            amount_raw = request.form.get("amount", "")
+            category = request.form.get("category", "")
+            date_raw = request.form.get("date", "")
+            description = request.form.get("description", "").strip()[:200]
+
+            error, amount = _validate_expense(amount_raw, category, date_raw)
+            if error is None:
+                with conn:
+                    conn.execute(
+                        "UPDATE expenses SET amount = ?, category = ?, date = ?, "
+                        "description = ? WHERE id = ? AND user_id = ?",
+                        (amount, category, date_raw, description or None, id, g.user["id"]),
+                    )
+                flash("Expense updated.", "success")
+                return redirect(url_for("profile"))
+
+            return render_template(
+                "edit_expense.html",
+                error=error,
+                categories=EXPENSE_CATEGORIES,
+                expense=expense,
+                form={
+                    "amount": amount_raw,
+                    "category": category,
+                    "date": date_raw,
+                    "description": description,
+                },
+            )
+
+        return render_template(
+            "edit_expense.html",
+            error=None,
+            categories=EXPENSE_CATEGORIES,
+            expense=expense,
+            form={
+                "amount": expense["amount"],
+                "category": expense["category"],
+                "date": expense["date"],
+                "description": expense["description"] or "",
+            },
+        )
+    finally:
+        conn.close()
 
 
 @app.route("/expenses/<int:id>/delete")
