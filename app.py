@@ -456,9 +456,34 @@ def edit_expense(id):
         conn.close()
 
 
-@app.route("/expenses/<int:id>/delete")
+@app.route("/expenses/<int:id>/delete", methods=["POST"])
+@login_required
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    """Delete one of the current user's expenses.
+
+    POST-only — the browser-side ``confirm()`` on the profile page is the
+    only guard against accidental clicks. Scoped to ``user_id`` so nobody
+    can delete another user's expense by guessing an id.
+    """
+    conn = get_db()
+    try:
+        expense = conn.execute(
+            "SELECT id FROM expenses WHERE id = ? AND user_id = ?",
+            (id, g.user["id"]),
+        ).fetchone()
+        if expense is None:
+            abort(404)
+
+        with conn:
+            conn.execute(
+                "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+                (id, g.user["id"]),
+            )
+    finally:
+        conn.close()
+
+    flash("Expense deleted.", "success")
+    return redirect(url_for("profile"))
 
 
 if __name__ == "__main__":
